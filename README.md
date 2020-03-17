@@ -8,6 +8,8 @@ O [Nourin](https://t.me:443/Niruon_bot) é um bot desenvolvido para o Telegram. 
   -  As informações retornadas pela API incluem: nome, CPF, data de nascimento, endereço e plano atualmente ativo.
 - Envio em massa de mensagens de texto (spam) para linhas móveis
   -  As mensagens podem ser enviadas para linhas móveis de qualquer operadora. Não há limites de envio.
+- Contratar planos controle para linhas Vivo Pré
+  -  Os planos duram entre 2 a 3 meses.
 
 ### Propósitos?
 
@@ -56,15 +58,6 @@ No Arch Linux, instale todos as dependências necessárias usando o `pacman`
 # pacman --sync 'curl' 'jq' 'git'
 ```
 
-#### openSUSE
-
-No openSUSE, instale todos as dependências necessárias usando o `zypper`
-
-```
-# zypper refresh
-# zypper install 'curl' 'jq' 'git'
-```
-
 ### Código
 
 Para obter o código fonte do bot, clone o repositório usando o `git`:
@@ -75,10 +68,10 @@ $ git clone --branch 'master' 'https://github.com/Niruon/Nourin.git' ~/Nourin
 
 ### Configuração
 
-No arquivo `Nourin.sh`, na linha 876, há o seguinte conteúdo:
+No arquivo `Nourin.sh`, na linha 6, há o seguinte conteúdo:
 
 ```
-init --token 'SEU_TOKEN_AQUI'
+declare -r BotToken='SEU_TOKEN_AQUI'
 ```
 
 Substitua o `SEU_TOKEN_AQUI` pelo token do bot que você criou usando o [BotFather](https://t.me:443/BotFather)

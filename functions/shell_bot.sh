@@ -92,18 +92,7 @@ set -f
 
 readonly _SHELLBOT_SH_=1					# Inicialização
 readonly _BOT_SCRIPT_=${0##*/}				# Script
-readonly _CURL_OPT_=" --resolve api.telegram.org:443:149.154.167.220
-											--http2
-											--tlsv1.3
-											--tls-max 1.3
-											--header Accept:
-											--header User-Agent:
-											--ipv4
-											--cacert $HOME/Nourin/cacert.pem
-											--no-sessionid
-											--no-keepalive
-											--silent
-											--request "	# CURL (opções)
+readonly _CURL_OPT_=" --resolve api.telegram.org:443:149.154.167.220 --http2-prior-knowledge --tlsv1.3 --ipv4 -cacert ${CACertificateFile} --capath ${CACertificateDirectory} --no-sessionid --no-keepalive --header User-Agent: --header Accept: --silent --request "	# CURL (opções)
 
 # Erros
 readonly _ERR_TYPE_BOOL_='tipo incompatível: suporta somente "true" ou "false".'
