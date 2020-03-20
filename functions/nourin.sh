@@ -15,6 +15,26 @@ function help_text {
 
 declare -rgf 'help_text'
 
+function user_info_text {
+
+	declare -r user_type=$(sqlite3 "${DatabasePath}" "SELECT user_type FROM data WHERE user_id = '${message_chat_id}';")
+	declare -r membership_start_date=$(sqlite3 "${DatabasePath}" "SELECT membership_start_date FROM data WHERE user_id = '${message_chat_id}';")
+	declare -r remaining_consultas_numero=$(sqlite3 "${DatabasePath}" "SELECT remaining_consultas_numero FROM data WHERE user_id = '${message_chat_id}';")
+	declare -r remaining_ativacao_plano=$(sqlite3 "${DatabasePath}" "SELECT remaining_ativacao_plano FROM data WHERE user_id = '${message_chat_id}';")
+
+	cat <<- TEXT
+	
+	*Tipo de usuário*: \`${user_type}\`
+	*Consultas restantes*: \`${remaining_consultas_numero}\`
+	*Ativações restantes*: \`${remaining_ativacao_plano}\`
+	*Início do ciclo*: \`${membership_start_date}\`
+	
+	TEXT
+
+}
+
+declare -rgf 'user_info_text'
+
 function flood_help_text {
 
 	cat <<- TEXT
@@ -453,6 +473,8 @@ function check_json_response {
 declare -rgf 'check_json_response'
 
 function query_number {
+
+	check_database_consulta_numero
 	
 	sendMessage --reply_to_message_id "${message_message_id}" \
 		--chat_id "${message_chat_id}" \
@@ -518,6 +540,8 @@ function query_number {
 		--message_id "${result_message_id}" \
 		--text "$(if [ "${PessoaJuridica}" != 'true' ]; then common_results_text; else cnpj_results_text; fi)" \
 		--parse_mode 'markdown' 
+	
+	update_database_consulta_numero
 	
 	exit '0'
 	
@@ -691,6 +715,8 @@ declare -rgf 'place_plan_order'
 
 function place_order {
 
+	check_database_ativacao_planos
+
 	sendMessage --reply_to_message_id "${message_message_id}" \
 		--chat_id "${message_chat_id}" \
 		--text 'Processando sua solicitação...' \
@@ -708,6 +734,7 @@ function place_order {
 				--message_id "${result_message_id}" \
 				--text "O plano \`${plan_code}\` foi ativado com sucesso na linha \`${telephone}\`." \
 				--parse_mode 'markdown' 
+			update_database_ativacao_planos
 			exit '0'
 		fi
 	done
@@ -735,3 +762,90 @@ function check_if_number_is_valid {
 }
 
 declare -rgf 'place_order'
+
+function update_database_consulta_numero {
+
+if [ "${user_type}" = 'free' ]; then
+	sqlite3 "${DatabasePath}" "UPDATE data SET
+		remaining_consultas_numero = remaining_consultas_numero - 1
+		WHERE user_id = '${message_chat_id}';"
+fi
+
+}
+
+function check_database_consulta_numero {
+
+	if [ "${remaining_consultas_numero}" -le '0' ]; then
+		sendMessage --reply_to_message_id "${message_message_id}" \
+			--chat_id "${message_chat_id}" \
+			--text 'Você atingiu o limite máximo de consultas de números. Aguarde até que o seu ciclo semanal seja resetado ou adquira um acesso premium ilimitado de 15 dias com o @CarlosPenha.' \
+			--disable_notification 'true'
+		exit '1'
+	fi
+
+}
+
+declare -rfg 'check_database_consulta_numero'
+
+function update_database_ativacao_planos {
+
+	if [ "${user_type}" = 'free' ]; then
+		sqlite3 "${DatabasePath}" "UPDATE data SET
+			remaining_ativacao_plano = remaining_ativacao_plano - 1
+			WHERE user_id = '${message_chat_id}';"
+	fi
+
+}
+
+declare -rfg 'update_database_ativacao_planos'
+
+function check_database_ativacao_planos {
+
+	if [ "${remaining_ativacao_plano}" -le '0' ]; then
+		sendMessage --reply_to_message_id "${message_message_id}" \
+			--chat_id "${message_chat_id}" \
+			--text 'Você atingiu o limite máximo de ativação de planos. Aguarde até que o seu ciclo semanal seja resetado ou adquira um acesso premium ilimitado de 15 dias com o @CarlosPenha.' \
+			--disable_notification 'true'
+		exit '1'
+	fi
+
+}
+
+declare -rfg 'check_database_consulta_numero'
+ 
+function check_user_status {
+
+declare -rg user_type=$(sqlite3 "${DatabasePath}" "SELECT user_type FROM data WHERE user_id = '${message_chat_id}';")
+declare -rg membership_start_date=$(sqlite3 "${DatabasePath}" "SELECT membership_start_date FROM data WHERE user_id = '${message_chat_id}';")
+
+	if ! [[  "${user_type}" =~ (free|premium) ]]; then
+		sqlite3 "${DatabasePath}" "INSERT INTO data VALUES(
+			'${message_chat_id}',
+			'free',
+			'15',
+			'3',
+			'$(printf '%(%s)T')' );"
+	elif [ "${user_type}" = 'free' ]; then
+		if [[ $(( "$(printf '%(%s)T')" - "${membership_start_date}" )) -ge '604800' ]]; then
+			sqlite3 "${DatabasePath}" "UPDATE data SET
+				remaining_consultas_numero = '15',
+				remaining_ativacao_plano = '3',
+				membership_start_date = '$(printf '%(%s)T')'
+				WHERE user_id = '${message_chat_id}';"
+		fi
+	elif [ "${user_type}" = 'premium' ]; then
+		if [[ $(( "$(printf '%(%s)T')" - "${membership_start_date}" )) -ge '1296000' ]]; then
+			sendMessage --reply_to_message_id "${message_message_id}" \
+				--chat_id "${message_chat_id}" \
+				--text 'Seu acesso premium expirou. Renove-o caso queira continuar utilizando esta ferramenta.' \
+				--disable_notification 'true'
+			exit '1'
+		fi
+	fi
+
+declare -rg remaining_consultas_numero=$(sqlite3 "${DatabasePath}" "SELECT remaining_consultas_numero FROM data WHERE user_id = '${message_chat_id}';")
+declare -rg remaining_ativacao_plano=$(sqlite3 "${DatabasePath}" "SELECT remaining_ativacao_plano FROM data WHERE user_id = '${message_chat_id}';")
+
+}
+
+declare -rfg 'check_user_status'

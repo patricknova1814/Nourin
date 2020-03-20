@@ -38,7 +38,7 @@ Em sistemas Debian e Ubuntu, instale todos as dependências necessárias usando 
 
 ```
 # apt --assume-yes update
-# apt --assume-yes install 'curl' 'jq' 'git'
+# apt --assume-yes install 'curl' 'jq' 'git' 'sqlite'
 ```
 
 #### Fedora/CentOS
@@ -46,7 +46,7 @@ Em sistemas Debian e Ubuntu, instale todos as dependências necessárias usando 
 Em sistemas Fedora e CentOS, instale todos as dependências necessárias usando o `yum`
 
 ```
-# yum -y install 'curl' 'jq' 'git'
+# yum -y install 'curl' 'jq' 'git' 'sqlite'
 ```
 
 #### Arch Linux
@@ -55,7 +55,7 @@ No Arch Linux, instale todos as dependências necessárias usando o `pacman`
 
 ```
 # pacman --sync --refresh
-# pacman --sync 'curl' 'jq' 'git'
+# pacman --sync 'curl' 'jq' 'git' 'sqlite'
 ```
 
 ### Código
@@ -68,7 +68,7 @@ $ git clone --branch 'master' 'https://github.com/Niruon/Nourin.git' ~/Nourin
 
 ### Configuração
 
-No arquivo `Nourin.sh`, na linha 6, há o seguinte conteúdo:
+No arquivo `Nourin.sh`, na linha 7, há o seguinte conteúdo:
 
 ```
 declare -r BotToken='SEU_TOKEN_AQUI'
